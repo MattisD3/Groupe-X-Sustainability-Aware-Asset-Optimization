@@ -94,9 +94,9 @@ python src\p0_pipeline.py
 The project was validated locally with:
 
 - Python 3.11.4
-- numpy 1.26.4
+- numpy 2.4.6
 - pandas 2.2.3
-- scipy 1.10.1
+- scipy 1.17.1
 - openpyxl 3.1.5
 - bottleneck 1.6.0
 
