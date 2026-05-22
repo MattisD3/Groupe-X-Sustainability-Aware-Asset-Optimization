@@ -28,6 +28,7 @@ Groupe-X-Sustainability-Aware-Asset-main/
 |   |-- p2_1_investment_set.py
 |   |-- p2_2_minimum_variance_portfolio.py
 |   |-- p2_3_value_weighted_portfolio.py
+|   |-- p2_4_minvar_vs_valueweighted_comparison.py
 |   |-- p3_0_carbon_utils.py
 |   |-- p3_1_carbon_footprint.py
 |   |-- p3_2_minimum_variance_carbon.py
@@ -57,6 +58,9 @@ Groupe-X-Sustainability-Aware-Asset-main/
 
 - `p2_3_value_weighted_portfolio.py`
   Computes the value-weighted benchmark portfolio for Section 2.3.
+
+- `p2_4_minvar_vs_valueweighted_comparison.py`
+  Computes and saves the cumulative return comparison between the out-of-sample minimum-variance portfolio and the value-weighted benchmark.
 
 - `p3_0_carbon_utils.py`
   Groups the shared carbon, optimization, and reporting helper functions used in Parts III and IV.

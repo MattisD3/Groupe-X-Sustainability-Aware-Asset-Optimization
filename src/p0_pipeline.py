@@ -44,16 +44,17 @@ def main():
     """
     log_step("Lancement de la pipeline du projet...")  # J'annonce le lancement global.
 
-    run_step("Etape 1/10 - Data cleaning", "p1_1_data_cleaning.py")  # Je commence par nettoyer les donnees.
-    run_step("Etape 2/10 - Minimum Variance 2.1", "p2_1_investment_set.py")  # Je construis ensuite l'investment set.
-    run_step("Etape 3/10 - Minimum Variance 2.2", "p2_2_minimum_variance_portfolio.py")  # Je calcule ensuite le portefeuille minimum variance.
-    run_step("Etape 4/10 - Value-Weighted 2.3", "p2_3_value_weighted_portfolio.py")  # Je termine la Part I avec le benchmark value-weighted.
-    run_step("Etape 5/10 - Carbon Footprint 3.1", "p3_1_carbon_footprint.py")  # Je mesure ensuite le profil carbone des deux portefeuilles de reference.
-    run_step("Etape 6/10 - Minimum Variance Carbon 3.2", "p3_2_minimum_variance_carbon.py")  # Je construis ensuite la version active avec contrainte carbone a 50%.
-    run_step("Etape 7/10 - Tracking Error Carbon 3.3", "p3_3_tracking_error_carbon.py")  # Je construis ensuite la version passive avec contrainte carbone a 50%.
-    run_step("Etape 8/10 - Carbon Comparison 3.4", "p3_4_carbon_comparison.py")  # Je termine la comparaison de la Partie 3.
-    run_step("Etape 9/10 - Net Zero 4.1", "p4_1_net_zero.py")  # Je construis ensuite la strategie net-zero passive.
-    run_step("Etape 10/10 - Passive Comparison 4.2", "p4_2_passive_comparison.py")  # Je termine par la comparaison finale des strategies passives.
+    run_step("Etape 1/11 - Data cleaning", "p1_1_data_cleaning.py")  # Je commence par nettoyer les donnees.
+    run_step("Etape 2/11 - Minimum Variance 2.1", "p2_1_investment_set.py")  # Je construis ensuite l'investment set.
+    run_step("Etape 3/11 - Minimum Variance 2.2", "p2_2_minimum_variance_portfolio.py")  # Je calcule ensuite le portefeuille minimum variance.
+    run_step("Etape 4/11 - Value-Weighted 2.3", "p2_3_value_weighted_portfolio.py")  # Je termine la Part I avec le benchmark value-weighted.
+    run_step("Etape 5/11 - MinVar vs Value-Weighted Comparison 2.4", "p2_4_minvar_vs_valueweighted_comparison.py") # Je trace le graphique comparatif minimum variance vs value-weighted.
+    run_step("Etape 6/11 - Carbon Footprint 3.1", "p3_1_carbon_footprint.py")  # Je mesure ensuite le profil carbone des deux portefeuilles de reference.
+    run_step("Etape 7/11 - Minimum Variance Carbon 3.2", "p3_2_minimum_variance_carbon.py")  # Je construis ensuite la version active avec contrainte carbone a 50%.
+    run_step("Etape 8/11 - Tracking Error Carbon 3.3", "p3_3_tracking_error_carbon.py")  # Je construis ensuite la version passive avec contrainte carbone a 50%.
+    run_step("Etape 9/11 - Carbon Comparison 3.4", "p3_4_carbon_comparison.py")  # Je termine la comparaison de la Partie 3.
+    run_step("Etape 10/11 - Net Zero 4.1", "p4_1_net_zero.py")  # Je construis ensuite la strategie net-zero passive.
+    run_step("Etape 11/11 - Passive Comparison 4.2", "p4_2_passive_comparison.py")  # Je termine par la comparaison finale des strategies passives.
 
     log_step("Pipeline terminee.")  # Je confirme que la pipeline actuelle est finie.
 
