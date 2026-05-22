@@ -135,3 +135,46 @@ The main takeaways from a validated run of the project are the following:
 | P(vw)_oos(NZ) | 8.53% | 16.14% | 0.420 | 232.57 |
 
 These values are intended as a compact reference point for the project report.
+
+## Installation & Execution
+
+### 1. Clone repository
+
+```bash
+git clone https://github.com/MattisD3/Groupe-X-Sustainability-Aware-Asset-Optimization.git
+```
+
+### 2. Open in PyCharm
+
+Open the cloned folder in PyCharm.
+
+### 3. Create a virtual environment
+
+PyCharm:
+
+File → Settings → Project → Python Interpreter → Add Interpreter → Virtual Environment
+
+Recommended:
+
+- Python 3.11.x
+
+### 4. Install dependencies
+
+Open terminal and run:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 5. Run the full pipeline
+
+```bash
+python src/p0_pipeline.py
+```
+
+### Expected runtime
+
+Validated locally:
+
+- Full pipeline: ~24–26 minutes
+- Tracking Error Carbon (3.3): ~7 minutes
