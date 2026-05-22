@@ -21,7 +21,7 @@ def save_cumulative_figure(mv_performance: pd.DataFrame, vw_performance: pd.Data
     ax.plot(
         vw_performance["date"],
         vw_performance["cumulative_growth"],
-        label="P(vw)",
+        label="P(vw)_oos",
     )
 
     ax.plot(
@@ -30,7 +30,7 @@ def save_cumulative_figure(mv_performance: pd.DataFrame, vw_performance: pd.Data
         label="P(mv)_oos",
     )
 
-    ax.set_title("Cumulative Returns: P(mv)_oos vs P(vw)")
+    ax.set_title("Cumulative Returns: P(mv)_oos vs P(vw)_oos")
     ax.set_xlabel("Date")
     ax.set_ylabel("Cumulative Growth")
     ax.legend()
@@ -45,7 +45,7 @@ def save_cumulative_figure(mv_performance: pd.DataFrame, vw_performance: pd.Data
 
 def main():
     start_time = time.perf_counter()
-    print("Section 2.4 - Je compare P(mv)_oos et P(vw)", flush=True)
+    print("Section 2.4 - Je compare P(mv)_oos et P(vw)_oos", flush=True)
 
     mv_performance = pd.read_excel(PROCESSED_DIR / MV_PERFORMANCE_FILE, parse_dates=["date"])
     vw_performance = pd.read_excel(PROCESSED_DIR / VW_PERFORMANCE_FILE, parse_dates=["date"])

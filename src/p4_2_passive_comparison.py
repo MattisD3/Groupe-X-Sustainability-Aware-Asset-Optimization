@@ -111,7 +111,7 @@ def save_cumulative_figure(vw_performance, vw_carbon_performance, vw_nz_performa
     """Je sauvegarde la figure des trois strategies passives."""
     figure_path = PROCESSED_DIR / FIGURE_FILE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(vw_performance["date"], vw_performance["cumulative_growth"], color="steelblue", label="P(vw)")
+    ax.plot(vw_performance["date"], vw_performance["cumulative_growth"], color="steelblue", label="P(vw)_oos")
     ax.plot(vw_carbon_performance["date"], vw_carbon_performance["cumulative_growth"], color="seagreen", label="P(vw)_oos(0.5)")
     ax.plot(vw_nz_performance["date"], vw_nz_performance["cumulative_growth"], color="purple", label="P(vw)_oos(NZ)")
     ax.set_title("Cumulative Returns of the Passive Strategies")

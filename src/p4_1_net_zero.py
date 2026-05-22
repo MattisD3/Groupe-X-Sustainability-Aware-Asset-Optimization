@@ -45,7 +45,7 @@ def save_cumulative_figure(base_performance: pd.DataFrame, nz_performance: pd.Da
     """Je sauvegarde la comparaison des rendements cumules contre le benchmark VW."""
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(base_performance["date"], base_performance["cumulative_growth"], color="steelblue", label="P(vw)")
+    ax.plot(base_performance["date"], base_performance["cumulative_growth"], color="steelblue", label="P(vw)_oos")
     ax.plot(nz_performance["date"], nz_performance["cumulative_growth"], color="purple", label="P(vw)_oos(NZ)")
     ax.set_title("Cumulative Returns: P(vw) vs P(vw)_oos(NZ)")
     ax.set_xlabel("Date")
@@ -61,7 +61,7 @@ def save_cf_path_figure(base_carbon: pd.DataFrame, nz_annual: pd.DataFrame, targ
     """Je sauvegarde la figure du carbon footprint et de la trajectoire net-zero."""
     figure_path = PROCESSED_DIR / CF_PATH_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(base_carbon["formation_year"], base_carbon["cf"], color="steelblue", label="P(vw)")
+    ax.plot(base_carbon["formation_year"], base_carbon["cf"], color="steelblue", label="P(vw)_oos")
     ax.plot(nz_annual["formation_year"], nz_annual["cf"], color="purple", label="P(vw)_oos(NZ)")
     ax.plot(target_table["formation_year"], target_table["cf_target"], color="black", linestyle="--", label="NZ Constraint Path")
     ax.set_title("Carbon Footprint: P(vw), P(vw)_oos(NZ), and Constraint Path")

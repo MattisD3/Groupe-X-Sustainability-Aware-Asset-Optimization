@@ -107,7 +107,7 @@ def save_cumulative_figure(mv_performance, mv_carbon_performance, vw_performance
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(mv_performance["date"], mv_performance["cumulative_growth"], color="darkorange", label="P(mv)_oos")
     ax.plot(mv_carbon_performance["date"], mv_carbon_performance["cumulative_growth"], color="firebrick", label="P(mv)_oos(0.5)")
-    ax.plot(vw_performance["date"], vw_performance["cumulative_growth"], color="steelblue", label="P(vw)")
+    ax.plot(vw_performance["date"], vw_performance["cumulative_growth"], color="steelblue", label="P(vw)_oos")
     ax.plot(vw_carbon_performance["date"], vw_carbon_performance["cumulative_growth"], color="seagreen", label="P(vw)_oos(0.5)")
     ax.set_title("Cumulative Returns of the Four Portfolios")
     ax.set_xlabel("Date")

@@ -36,7 +36,7 @@ def save_cumulative_figure(base_performance: pd.DataFrame, carbon_performance: p
     """Je sauvegarde la comparaison des rendements cumules contre le benchmark VW."""
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(base_performance["date"], base_performance["cumulative_growth"], color="steelblue", label="P(vw)")
+    ax.plot(base_performance["date"], base_performance["cumulative_growth"], color="steelblue", label="P(vw)_oos")
     ax.plot(carbon_performance["date"], carbon_performance["cumulative_growth"], color="seagreen", label="P(vw)_oos(0.5)")
     ax.set_title("Cumulative Returns: P(vw) vs P(vw)_oos(0.5)")
     ax.set_xlabel("Date")
@@ -52,7 +52,7 @@ def save_waci_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
     """Je sauvegarde la figure WACI de la section 3.3."""
     figure_path = PROCESSED_DIR / WACI_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(base_carbon["formation_year"], base_carbon["waci"], color="steelblue", label="P(vw)")
+    ax.plot(base_carbon["formation_year"], base_carbon["waci"], color="steelblue", label="P(vw)_oos")
     ax.plot(carbon_portfolio["formation_year"], carbon_portfolio["waci"], color="seagreen", label="P(vw)_oos(0.5)")
     ax.set_title("WACI: P(vw) vs P(vw)_oos(0.5)")
     ax.set_xlabel("Formation Year")
@@ -68,7 +68,7 @@ def save_cf_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
     """Je sauvegarde la figure CF de la section 3.3."""
     figure_path = PROCESSED_DIR / CF_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(base_carbon["formation_year"], base_carbon["cf"], color="steelblue", label="P(vw)")
+    ax.plot(base_carbon["formation_year"], base_carbon["cf"], color="steelblue", label="P(vw)_oos")
     ax.plot(carbon_portfolio["formation_year"], carbon_portfolio["cf"], color="seagreen", label="P(vw)_oos(0.5)")
     ax.set_title("Carbon Footprint: P(vw) vs P(vw)_oos(0.5)")
     ax.set_xlabel("Formation Year")
