@@ -43,9 +43,31 @@ def load_mv_reference_cf():
 def save_cumulative_figure(base_performance: pd.DataFrame, carbon_performance: pd.DataFrame):
     """Je sauvegarde la figure de performance cumulative."""
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
+
+    # copie locale pour ne rien modifier ailleurs
+    base = base_performance.copy()
+    carbon = carbon_performance.copy()
+
+    # recalcul propre des rendements cumulés
+    base["cumulative_growth_plot"] = (1 + base["portfolio_return"]).cumprod()
+    carbon["cumulative_growth_plot"] = (1 + carbon["portfolio_return"]).cumprod()
+
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(base_performance["date"], base_performance["cumulative_growth"], color="darkorange", label="P(mv)_oos")
-    ax.plot(carbon_performance["date"], carbon_performance["cumulative_growth"], color="firebrick", label="P(mv)_oos(0.5)")
+
+    ax.plot(
+        base["date"],
+        base["cumulative_growth_plot"],
+        color="darkorange",
+        label="P(mv)_oos"
+    )
+
+    ax.plot(
+        carbon["date"],
+        carbon["cumulative_growth_plot"],
+        color="firebrick",
+        label="P(mv)_oos(0.5)"
+    )
+
     ax.set_title("Cumulative Returns: P(mv)_oos vs P(mv)_oos(0.5)")
     ax.set_xlabel("Date")
     ax.set_ylabel("Cumulative Growth")

@@ -32,13 +32,38 @@ WACI_FIGURE = "V_TrackingError_Carbon_3_3_WACI.png"
 CF_FIGURE = "V_TrackingError_Carbon_3_3_CF.png"
 
 
-def save_cumulative_figure(base_performance: pd.DataFrame, carbon_performance: pd.DataFrame):
-    """Je sauvegarde la comparaison des rendements cumules contre le benchmark VW."""
+def save_cumulative_figure(base_performance: pd.DataFrame,
+                           carbon_performance: pd.DataFrame):
+    """Je sauvegarde la figure de performance cumulative."""
+
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
+
+    # copie locale pour éviter toute modification ailleurs
+    base = base_performance.copy()
+    carbon = carbon_performance.copy()
+
+    # recalcul propre des rendements cumulés
+    base["cumulative_growth_plot"] = (1 + base["portfolio_return"]).cumprod()
+
+    carbon["cumulative_growth_plot"] = (1 + carbon["portfolio_return"]).cumprod()
+
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(base_performance["date"], base_performance["cumulative_growth"], color="steelblue", label="P(vw)_oos")
-    ax.plot(carbon_performance["date"], carbon_performance["cumulative_growth"], color="seagreen", label="P(vw)_oos(0.5)")
-    ax.set_title("Cumulative Returns: P(vw) vs P(vw)_oos(0.5)")
+
+    ax.plot(
+        base["date"],
+        base["cumulative_growth_plot"],
+        color="steelblue",
+        label="P(vw)_oos"
+    )
+
+    ax.plot(
+        carbon["date"],
+        carbon["cumulative_growth_plot"],
+        color="seagreen",
+        label="P(vw)_oos(0.5)"
+    )
+
+    ax.set_title("Cumulative Returns: P(vw)_oos vs P(vw)_oos(0.5)")
     ax.set_xlabel("Date")
     ax.set_ylabel("Cumulative Growth")
     ax.legend()
@@ -54,7 +79,7 @@ def save_waci_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(base_carbon["formation_year"], base_carbon["waci"], color="steelblue", label="P(vw)_oos")
     ax.plot(carbon_portfolio["formation_year"], carbon_portfolio["waci"], color="seagreen", label="P(vw)_oos(0.5)")
-    ax.set_title("WACI: P(vw) vs P(vw)_oos(0.5)")
+    ax.set_title("WACI: P(vw)_oos vs P(vw)_oos(0.5)")
     ax.set_xlabel("Formation Year")
     ax.set_ylabel("Tonnes CO2 per Million USD of Revenue")
     ax.legend()
@@ -70,7 +95,7 @@ def save_cf_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(base_carbon["formation_year"], base_carbon["cf"], color="steelblue", label="P(vw)_oos")
     ax.plot(carbon_portfolio["formation_year"], carbon_portfolio["cf"], color="seagreen", label="P(vw)_oos(0.5)")
-    ax.set_title("Carbon Footprint: P(vw) vs P(vw)_oos(0.5)")
+    ax.set_title("Carbon Footprint: P(vw)_oos vs P(vw)_oos(0.5)")
     ax.set_xlabel("Formation Year")
     ax.set_ylabel("Tonnes CO2 per Million USD Invested")
     ax.legend()

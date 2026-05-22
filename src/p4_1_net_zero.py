@@ -41,17 +41,48 @@ def compute_vw_reference_cf(year_universe: pd.DataFrame):
     return float(valid_carbon["scope1_co2"].sum() / total_market_cap)
 
 
-def save_cumulative_figure(base_performance: pd.DataFrame, nz_performance: pd.DataFrame):
-    """Je sauvegarde la comparaison des rendements cumules contre le benchmark VW."""
+def save_cumulative_figure(base_performance: pd.DataFrame,
+                           nz_performance: pd.DataFrame):
+    """Je sauvegarde la comparaison des rendements cumulés contre le benchmark VW."""
+
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
+
+    # copies locales pour ne rien modifier ailleurs
+    base = base_performance.copy()
+    nz = nz_performance.copy()
+
+    # recalcul propre du cumul
+    base["cumulative_growth_plot"] = (
+        1 + base["portfolio_return"]
+    ).cumprod()
+
+    nz["cumulative_growth_plot"] = (
+        1 + nz["portfolio_return"]
+    ).cumprod()
+
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(base_performance["date"], base_performance["cumulative_growth"], color="steelblue", label="P(vw)_oos")
-    ax.plot(nz_performance["date"], nz_performance["cumulative_growth"], color="purple", label="P(vw)_oos(NZ)")
-    ax.set_title("Cumulative Returns: P(vw) vs P(vw)_oos(NZ)")
+
+    ax.plot(
+        base["date"],
+        base["cumulative_growth_plot"],
+        color="steelblue",
+        label="P(vw)_oos"
+    )
+
+    ax.plot(
+        nz["date"],
+        nz["cumulative_growth_plot"],
+        color="purple",
+        label="P(vw)_oos(NZ)"
+    )
+
+    ax.set_title("Cumulative Returns: P(vw)_oos vs P(vw)_oos(NZ)")
     ax.set_xlabel("Date")
     ax.set_ylabel("Cumulative Growth")
+
     ax.legend()
     ax.grid(True)
+
     fig.tight_layout()
     fig.savefig(figure_path, bbox_inches="tight")
     plt.close(fig)
@@ -64,7 +95,7 @@ def save_cf_path_figure(base_carbon: pd.DataFrame, nz_annual: pd.DataFrame, targ
     ax.plot(base_carbon["formation_year"], base_carbon["cf"], color="steelblue", label="P(vw)_oos")
     ax.plot(nz_annual["formation_year"], nz_annual["cf"], color="purple", label="P(vw)_oos(NZ)")
     ax.plot(target_table["formation_year"], target_table["cf_target"], color="black", linestyle="--", label="NZ Constraint Path")
-    ax.set_title("Carbon Footprint: P(vw), P(vw)_oos(NZ), and Constraint Path")
+    ax.set_title("Carbon Footprint: P(vw)_oos, P(vw)_oos(NZ), and Constraint Path")
     ax.set_xlabel("Formation Year")
     ax.set_ylabel("Tonnes CO2 per Million USD Invested")
     ax.legend()

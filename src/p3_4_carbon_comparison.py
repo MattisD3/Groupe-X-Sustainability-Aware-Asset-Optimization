@@ -101,21 +101,68 @@ def build_comment_table(comparison_table: pd.DataFrame):
     )
 
 
-def save_cumulative_figure(mv_performance, mv_carbon_performance, vw_performance, vw_carbon_performance):
-    """Je sauvegarde la figure commune des quatre portefeuilles de la section 3.4."""
+def save_cumulative_figure(
+        mv_performance,
+        mv_carbon_performance,
+        vw_performance,
+        vw_carbon_performance):
+
+    """Je sauvegarde la figure commune des quatre portefeuilles."""
+
     figure_path = PROCESSED_DIR / FIGURE_FILE
+
+    # copies locales
+    mv = mv_performance.copy()
+    mv_carbon = mv_carbon_performance.copy()
+    vw = vw_performance.copy()
+    vw_carbon = vw_carbon_performance.copy()
+
+    # recalcul propre des cumulés
+    mv["cum_plot"] = (1 + mv["portfolio_return"]).cumprod()
+    mv_carbon["cum_plot"] = (1 + mv_carbon["portfolio_return"]).cumprod()
+    vw["cum_plot"] = (1 + vw["portfolio_return"]).cumprod()
+    vw_carbon["cum_plot"] = (1 + vw_carbon["portfolio_return"]).cumprod()
+
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(mv_performance["date"], mv_performance["cumulative_growth"], color="darkorange", label="P(mv)_oos")
-    ax.plot(mv_carbon_performance["date"], mv_carbon_performance["cumulative_growth"], color="firebrick", label="P(mv)_oos(0.5)")
-    ax.plot(vw_performance["date"], vw_performance["cumulative_growth"], color="steelblue", label="P(vw)_oos")
-    ax.plot(vw_carbon_performance["date"], vw_carbon_performance["cumulative_growth"], color="seagreen", label="P(vw)_oos(0.5)")
+
+    ax.plot(
+        mv["date"],
+        mv["cum_plot"],
+        color="darkorange",
+        label="P(mv)_oos"
+    )
+
+    ax.plot(
+        mv_carbon["date"],
+        mv_carbon["cum_plot"],
+        color="firebrick",
+        label="P(mv)_oos(0.5)"
+    )
+
+    ax.plot(
+        vw["date"],
+        vw["cum_plot"],
+        color="steelblue",
+        label="P(vw)_oos"
+    )
+
+    ax.plot(
+        vw_carbon["date"],
+        vw_carbon["cum_plot"],
+        color="seagreen",
+        label="P(vw)_oos(0.5)"
+    )
+
     ax.set_title("Cumulative Returns of the Four Portfolios")
     ax.set_xlabel("Date")
     ax.set_ylabel("Cumulative Growth")
+
     ax.legend()
     ax.grid(True)
+
     fig.tight_layout()
     fig.savefig(figure_path, bbox_inches="tight")
+
     plt.close(fig)
 
 

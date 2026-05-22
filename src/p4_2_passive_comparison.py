@@ -107,22 +107,64 @@ def build_comment_table(comparison_table: pd.DataFrame):
     )
 
 
-def save_cumulative_figure(vw_performance, vw_carbon_performance, vw_nz_performance):
-    """Je sauvegarde la figure des trois strategies passives."""
+def save_cumulative_figure(vw_performance,
+                           vw_carbon_performance,
+                           vw_nz_performance):
+    """Je sauvegarde la figure des trois stratégies passives."""
+
     figure_path = PROCESSED_DIR / FIGURE_FILE
+
+    # copies locales
+    base = vw_performance.copy()
+    carbon = vw_carbon_performance.copy()
+    nz = vw_nz_performance.copy()
+
+    # recalcul propre des rendements cumulés
+    base["cumulative_growth_plot"] = (
+        1 + base["portfolio_return"]
+    ).cumprod()
+
+    carbon["cumulative_growth_plot"] = (
+        1 + carbon["portfolio_return"]
+    ).cumprod()
+
+    nz["cumulative_growth_plot"] = (
+        1 + nz["portfolio_return"]
+    ).cumprod()
+
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
-    ax.plot(vw_performance["date"], vw_performance["cumulative_growth"], color="steelblue", label="P(vw)_oos")
-    ax.plot(vw_carbon_performance["date"], vw_carbon_performance["cumulative_growth"], color="seagreen", label="P(vw)_oos(0.5)")
-    ax.plot(vw_nz_performance["date"], vw_nz_performance["cumulative_growth"], color="purple", label="P(vw)_oos(NZ)")
+
+    ax.plot(
+        base["date"],
+        base["cumulative_growth_plot"],
+        color="steelblue",
+        label="P(vw)_oos"
+    )
+
+    ax.plot(
+        carbon["date"],
+        carbon["cumulative_growth_plot"],
+        color="seagreen",
+        label="P(vw)_oos(0.5)"
+    )
+
+    ax.plot(
+        nz["date"],
+        nz["cumulative_growth_plot"],
+        color="purple",
+        label="P(vw)_oos(NZ)"
+    )
+
     ax.set_title("Cumulative Returns of the Passive Strategies")
     ax.set_xlabel("Date")
     ax.set_ylabel("Cumulative Growth")
+
     ax.legend()
     ax.grid(True)
+
     fig.tight_layout()
     fig.savefig(figure_path, bbox_inches="tight")
     plt.close(fig)
-
 
 def main():
     """Je compare les trois strategies passives de la section 4.2."""
