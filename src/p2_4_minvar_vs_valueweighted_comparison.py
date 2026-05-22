@@ -18,16 +18,16 @@ def save_cumulative_figure(mv_performance: pd.DataFrame, vw_performance: pd.Data
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
 
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
+    ax.plot(
+        vw_performance["date"],
+        vw_performance["cumulative_growth"],
+        label="P(vw)",
+    )
 
     ax.plot(
         mv_performance["date"],
         mv_performance["cumulative_growth"],
         label="P(mv)_oos",
-    )
-    ax.plot(
-        vw_performance["date"],
-        vw_performance["cumulative_growth"],
-        label="P(vw)",
     )
 
     ax.set_title("Cumulative Returns: P(mv)_oos vs P(vw)")
