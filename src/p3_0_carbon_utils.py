@@ -8,25 +8,25 @@ import pandas as pd
 from scipy.optimize import minimize
 
 
-# Je centralise ici les chemins du projet.
+# Project paths.
 BASE_DIR = Path(__file__).resolve().parents[1]
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 RAW_DIR = BASE_DIR / "data" / "Raw"
 
 
-# Je borne toutes les sections carbone exactement comme dans le projet.
+# Carbon section time span and base wealth.
 FIRST_FORMATION_YEAR = 2013
 LAST_FORMATION_YEAR = 2024
 INITIAL_WEALTH_USD = 1_000_000.0
 
 
 def log_step(message: str):
-    """Je montre clairement l'avancement dans le terminal."""
+    """Print a progress message to the terminal."""
     print(message, flush=True)
 
 
 def write_workbook(file_name: str, sheets: dict[str, pd.DataFrame]):
-    """J'ecris plusieurs feuilles dans un seul fichier Excel."""
+    """Write multiple sheets to a single Excel workbook."""
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     target_path = PROCESSED_DIR / file_name
     with pd.ExcelWriter(target_path, engine="openpyxl") as writer:
@@ -37,12 +37,12 @@ def write_workbook(file_name: str, sheets: dict[str, pd.DataFrame]):
 
 
 def standardize_isin(series: pd.Series):
-    """Je nettoie les ISIN tout de suite apres chargement."""
+    """Standardize ISIN values immediately after loading."""
     return series.astype(str).str.strip()
 
 
 def load_processed_excel(file_name: str, rename_map: dict[str, str] | None = None, parse_dates: list[str] | None = None):
-    """Je charge un fichier processed et je renomme ses colonnes si besoin."""
+    """Load a processed file and rename columns if needed."""
     df = pd.read_excel(PROCESSED_DIR / file_name, parse_dates=parse_dates)
     if rename_map:
         df = df.rename(columns=rename_map)
@@ -53,12 +53,12 @@ def load_processed_excel(file_name: str, rename_map: dict[str, str] | None = Non
 
 def compute_summary_stats(returns_series, rf_series):
     """
-    Je calcule les statistiques demandees dans le projet.
+    Compute the summary statistics required by the project.
 
-    Annualisation:
+    Annualization:
     - mean * 12
     - std * sqrt(12)
-    - Sharpe = mean excess annualise / volatilite annualisee
+    - Sharpe = annualized mean excess return / annualized volatility
     """
     returns = pd.Series(returns_series).astype(float).dropna()
 
@@ -87,7 +87,7 @@ def compute_summary_stats(returns_series, rf_series):
 
 def load_risk_free_rate():
     """
-    Je charge uniquement le taux sans risque brut, qui reste autorise.
+    Load the raw risk-free rate file.
     """
     risk_free = pd.read_excel(RAW_DIR / "Risk_Free_Rate_2025.xlsx")
     first_column = risk_free.columns[0]
@@ -101,8 +101,8 @@ def load_risk_free_rate():
 
 def load_carbon_inputs():
     """
-    Je charge seulement les fichiers utiles deja produits par la Part I.
-    Je ne recharge aucun fichier Datastream brut.
+    Load only the processed files required for the carbon sections.
+    No raw Datastream file is reloaded here.
     """
     annual_data = load_processed_excel(
         "C_EM_Annual_Data.xlsx",
@@ -189,7 +189,7 @@ def load_carbon_inputs():
 
 
 def build_return_matrix(monthly_data: pd.DataFrame):
-    """Je pivote les rendements mensuels pour les calculs de portefeuille."""
+    """Pivot monthly returns for portfolio calculations."""
     return_matrix = monthly_data.pivot(index="date", columns="isin", values="monthly_return")
     return_matrix.columns = return_matrix.columns.astype(str)
     return return_matrix.sort_index()
@@ -197,8 +197,8 @@ def build_return_matrix(monthly_data: pd.DataFrame):
 
 def get_vw_rebalancing_weights(vw_monthly_weights: pd.DataFrame):
     """
-    Je recupere uniquement les poids de janvier de chaque annee d'investissement.
-    Ce sont eux qui representent les poids de rebalancement du benchmark VW.
+    Keep only the January weights of each investment year.
+    These weights represent the VW benchmark rebalancing weights.
     """
     january_weights = vw_monthly_weights.loc[vw_monthly_weights["date"].dt.month == 1].copy()
     first_date_per_year = january_weights.groupby("formation_year")["date"].min().rename("first_january_date")
@@ -210,7 +210,7 @@ def get_vw_rebalancing_weights(vw_monthly_weights: pd.DataFrame):
 
 def prepare_eligible_annual_panel(annual_data: pd.DataFrame, investment_set: pd.DataFrame):
     """
-    Je prepare le panel annuel restreint aux firmes eligibles et avec les variables carbone.
+    Build the annual panel restricted to eligible firms with carbon variables.
     """
     eligible = investment_set.loc[investment_set["min_var_eligible"]].copy()
     eligible = eligible.drop(
@@ -262,7 +262,7 @@ def compute_portfolio_annual_carbon_metrics(
     portfolio_name: str,
 ):
     """
-    Je calcule les details firme par firme, puis les metriques annuelles WACI et CF.
+    Compute firm-level details and annual WACI and CF metrics.
     """
     merged = weights.merge(
         eligible_annual,
@@ -330,7 +330,7 @@ def compute_portfolio_annual_carbon_metrics(
 
 def compute_annual_wealth_path(monthly_performance: pd.DataFrame, initial_wealth: float = INITIAL_WEALTH_USD):
     """
-    Je reconstruis la valeur du portefeuille a chaque date de formation.
+    Reconstruct portfolio wealth at each formation date.
     """
     annual_growth = (
         monthly_performance.groupby(["formation_year", "investment_year"])["portfolio_return"]
@@ -360,7 +360,7 @@ def compute_annual_wealth_path(monthly_performance: pd.DataFrame, initial_wealth
 
 def align_covariance_universe(covariance_matrix: pd.DataFrame, universe: pd.DataFrame):
     """
-    Je garde seulement les firmes presentes dans la matrice de covariance et sans ligne/colonne incomplete.
+    Keep only firms present in the covariance matrix with complete rows and columns.
     """
     candidate_isins = [
         isin
@@ -393,7 +393,7 @@ def solve_quadratic_portfolio(
     ftol: float = 1e-12,
 ):
     """
-    Je resous un probleme quadratique de portefeuille avec SLSQP.
+    Solve a quadratic portfolio optimization problem with SLSQP.
     """
     asset_names = covariance_matrix.columns.tolist()
     sigma = covariance_matrix.to_numpy(dtype=float)
@@ -512,7 +512,7 @@ def solve_quadratic_portfolio(
 
 def build_drifted_performance(return_matrix: pd.DataFrame, annual_weights: pd.DataFrame):
     """
-    Je calcule les rendements ex post en laissant les poids deriver dans l'annee.
+    Compute ex post returns while letting portfolio weights drift within the year.
     """
     portfolio_rows: list[dict[str, object]] = []
     available_dates = set(return_matrix.index)
@@ -571,7 +571,7 @@ def compare_weight_structures(
     new_label: str,
 ):
     """
-    Je compare deux structures de poids pour decrire les changements de portefeuille.
+    Compare two weight structures to describe portfolio changes.
     """
     comparison = base_weights.merge(
         new_weights,
@@ -614,7 +614,7 @@ def build_year_end_vw_benchmark_weights(
     require_valid_carbon: bool = False,
 ):
     """
-    Je construis les poids annuels du benchmark VW a partir des market caps de fin d'annee.
+    Build annual VW benchmark weights from year-end market capitalizations.
     """
     benchmark_rows: list[pd.DataFrame] = []
 
@@ -648,7 +648,7 @@ def build_year_end_vw_benchmark_weights(
 
 def build_reference_summary_table(mv_performance: pd.DataFrame, vw_performance: pd.DataFrame, risk_free: pd.DataFrame):
     """
-    Je reconstruis les statistiques de la Part I pour controler que tout colle.
+    Rebuild Part I summary statistics for cross-checking.
     """
     risk_free_series = risk_free.set_index("date")["rf_decimal"]
 
@@ -682,23 +682,23 @@ def build_reference_summary_table(mv_performance: pd.DataFrame, vw_performance: 
 
 def ensure_part1_cross_check(reference_table: pd.DataFrame):
     """
-    Je bloque la suite si les resultats de la Part I ne collent pas.
+    Stop the workflow if the Part I results do not match the reference values.
     """
     if not reference_table["within_tolerance"].all():
         raise ValueError("Part I cross-check failed. The current outputs do not match the validated reference values.")
 
 
 def build_note_table(note_text: str):
-    """Je cree une petite table de note pour les sorties qualitatives."""
+    """Build a small note table for qualitative outputs."""
     return pd.DataFrame([{"note": note_text}])
 
 
 def build_caption_table(captions: list[dict[str, str]]):
-    """Je rassemble les explications des tableaux et figures dans une feuille simple."""
+    """Collect table and figure explanations in a simple worksheet."""
     return pd.DataFrame(captions)
 
 
 def warn(message: str):
-    """Je journalise les avertissements sans arreter l'execution."""
+    """Log warnings without stopping execution."""
     warnings.warn(message)
     print(f"WARNING: {message}", flush=True)

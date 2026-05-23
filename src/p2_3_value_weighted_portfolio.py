@@ -21,15 +21,16 @@ LAST_FORMATION_YEAR = 2024
 OUTPUT_FILES = {
     "weights": "M_ValueWeighted_2_3_Monthly_Weights.xlsx",
     "monthly_returns": "N_ValueWeighted_2_3_Monthly_Performance.xlsx",
-    "summary": "O_ValueWeighted_2_3_Summary.xlsx",
-}
+    "summary": "O_ValueWeighted_2_3_Summary.xlsx"}
 
 
 def log_step(message: str):
+    """Print a progress message to the terminal."""
     print(message, flush=True)
 
 
 def write_excel_with_fallback(df: pd.DataFrame, file_name: str):
+    """Write an Excel file, or a _new version if the file is already open."""
     target_path = PROCESSED_DIR / file_name
 
     try:
@@ -43,7 +44,7 @@ def write_excel_with_fallback(df: pd.DataFrame, file_name: str):
 
 def load_monthly_market_cap_long():
     """
-    Je charge la market cap mensuelle brute et je la mets au format long.
+    Load the raw monthly market capitalization file and convert it to long format.
     """
     market_cap_raw = pd.read_excel(RAW_DIR / MONTHLY_MARKET_CAP_FILE)
     market_cap_raw = market_cap_raw.loc[market_cap_raw["ISIN"].notna()].copy()
@@ -70,7 +71,7 @@ def load_monthly_market_cap_long():
 
 def merge_market_cap_into_monthly_data(monthly_data: pd.DataFrame):
     """
-    Je rajoute la market cap mensuelle directement dans le fichier mensuel nettoye.
+    Merge monthly market capitalization into the cleaned monthly dataset.
     """
     market_cap_long = load_monthly_market_cap_long()
 
@@ -133,8 +134,8 @@ def build_monthly_return_matrix(monthly_data: pd.DataFrame):
 def build_monthly_market_cap_matrix(monthly_data: pd.DataFrame):
     if "market_cap" not in monthly_data.columns:
         raise KeyError(
-            "La colonne 'market_cap' n'existe pas dans B_EM_Monthly_Data.xlsx. "
-            "Il faut d'abord merger DS_MV_T_USD_M_2025.xlsx dans monthly_data."
+            "The 'market_cap' column is missing from B_EM_Monthly_Data.xlsx. "
+            "DS_MV_T_USD_M_2025.xlsx must be merged into monthly_data first."
         )
 
     market_cap_matrix = monthly_data.pivot(index="date", columns="isin", values="market_cap")
@@ -160,7 +161,7 @@ def compute_value_weighted_performance(
     )
 
     for formation_year in range(FIRST_FORMATION_YEAR, LAST_FORMATION_YEAR + 1):
-        log_step(f"Je traite l'annee de formation {formation_year}.")
+        log_step(f"  Value-Weighted 2.3 - Processing formation year {formation_year}...")
         year_investment_set = investment_set.loc[
             (investment_set["formation_year"] == formation_year)
             & (investment_set["min_var_eligible"]),
@@ -303,21 +304,21 @@ def save_outputs(
 
 
 def main():
-    log_step("Etape 1/4 - Je charge les donnees et j'ajoute la market cap mensuelle...")
+    log_step("  Value-Weighted 2.3 1/4 - Loading the data and adding monthly market capitalization...")
     monthly_data, investment_set, risk_free_rate = load_inputs()
 
-    log_step("Etape 2/4 - Je construis les matrices mensuelles...")
+    log_step("  Value-Weighted 2.3 2/4 - Building the monthly matrices...")
     return_matrix = build_monthly_return_matrix(monthly_data)
     market_cap_matrix = build_monthly_market_cap_matrix(monthly_data)
 
-    log_step("Etape 3/4 - Je calcule le portefeuille value-weighted...")
+    log_step("  Value-Weighted 2.3 3/4 - Computing the value-weighted portfolio...")
     portfolio_returns, monthly_weights = compute_value_weighted_performance(
         return_matrix=return_matrix,
         market_cap_matrix=market_cap_matrix,
         investment_set=investment_set,
     )
 
-    log_step("Etape 4/4 - Je calcule les stats et j'enregistre...")
+    log_step("  Value-Weighted 2.3 4/4 - Computing summary statistics and saving outputs...")
     summary_table = compute_summary_statistics(
         portfolio_returns=portfolio_returns,
         risk_free_rate=risk_free_rate,
@@ -328,9 +329,9 @@ def main():
         summary_table=summary_table,
     )
 
-    log_step("Partie 2.3 terminee.")
-    log_step(f"Nombre de rendements mensuels VW: {len(portfolio_returns)}")
-    log_step(f"Nombre de lignes de poids VW: {len(monthly_weights)}")
+    log_step("  Part 2.3 completed.")
+    log_step(f"  Monthly VW return rows: {len(portfolio_returns)}")
+    log_step(f"  Monthly VW weight rows: {len(monthly_weights)}")
     for label, path in written_files.items():
         log_step(f"{label} : {path}")
 

@@ -34,21 +34,20 @@ SECTION_31_FILE = "P_Carbon_3_1_WACI_CF.xlsx"
 
 
 def load_mv_reference_cf():
-    """Je charge le CF annuel de reference du portefeuille minimum variance."""
+    """Load the annual CF reference of the minimum-variance portfolio."""
     annual_metrics = pd.read_excel(PROCESSED_DIR / SECTION_31_FILE, sheet_name="Annual Metrics")
     mv_metrics = annual_metrics.loc[annual_metrics["portfolio"] == "mv_oos", ["formation_year", "cf"]].copy()
     return mv_metrics.set_index("formation_year")["cf"]
 
 
 def save_cumulative_figure(base_performance: pd.DataFrame, carbon_performance: pd.DataFrame):
-    """Je sauvegarde la figure de performance cumulative."""
+    """Save the cumulative return figure."""
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
 
-    # copie locale pour ne rien modifier ailleurs
+    # Local copies avoid modifying the original inputs.
     base = base_performance.copy()
     carbon = carbon_performance.copy()
 
-    # recalcul propre des rendements cumulés
     base["cumulative_growth_plot"] = (1 + base["portfolio_return"]).cumprod()
     carbon["cumulative_growth_plot"] = (1 + carbon["portfolio_return"]).cumprod()
 
@@ -79,7 +78,7 @@ def save_cumulative_figure(base_performance: pd.DataFrame, carbon_performance: p
 
 
 def save_waci_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
-    """Je sauvegarde la figure WACI de la section 3.2."""
+    """Save the WACI figure for Section 3.2."""
     figure_path = PROCESSED_DIR / WACI_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(base_carbon["formation_year"], base_carbon["waci"], color="darkorange", label="P(mv)_oos")
@@ -95,7 +94,7 @@ def save_waci_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
 
 
 def save_cf_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
-    """Je sauvegarde la figure CF de la section 3.2."""
+    """Save the CF figure for Section 3.2."""
     figure_path = PROCESSED_DIR / CF_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(base_carbon["formation_year"], base_carbon["cf"], color="darkorange", label="P(mv)_oos")
@@ -111,8 +110,8 @@ def save_cf_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
 
 
 def main():
-    """Je construis le portefeuille minimum-variance avec contrainte carbone a 50%."""
-    log_step("Section 3.2 - Etape 1/5 - Je charge les donnees utiles et le CF de reference...")
+    """Build the minimum-variance portfolio with a 50% carbon constraint."""
+    log_step("  Minimum Variance Carbon 3.2 1/5 - Loading the required data and the CF reference...")
     data = load_carbon_inputs()
     eligible_annual = prepare_eligible_annual_panel(data["annual_data"], data["investment_set"])
     return_matrix = build_return_matrix(data["monthly_data"])
@@ -121,12 +120,12 @@ def main():
     base_carbon = pd.read_excel(PROCESSED_DIR / SECTION_31_FILE, sheet_name="Annual Metrics")
     base_carbon = base_carbon.loc[base_carbon["portfolio"] == "mv_oos"].copy()
 
-    log_step("Section 3.2 - Etape 2/5 - Je resous les optimisations annuelles...")
+    log_step("  Minimum Variance Carbon 3.2 2/5 - Solving the annual optimizations...")
     weight_rows: list[pd.DataFrame] = []
     optimization_logs: list[dict[str, object]] = []
 
     for formation_year in range(FIRST_FORMATION_YEAR, LAST_FORMATION_YEAR + 1):
-        log_step(f"Section 3.2 - Je traite l'annee de formation {formation_year}...")
+        log_step(f"  Minimum Variance Carbon 3.2 - Processing formation year {formation_year}...")
         year_universe = eligible_annual.loc[
             (eligible_annual["formation_year"] == formation_year) & (eligible_annual["valid_carbon_inputs"])
         ].copy()
@@ -198,13 +197,13 @@ def main():
     mv_carbon_weights = pd.concat(weight_rows, ignore_index=True)
     optimization_log = pd.DataFrame(optimization_logs)
 
-    log_step("Section 3.2 - Etape 3/5 - Je calcule la performance mensuelle ex post...")
+    log_step("  Minimum Variance Carbon 3.2 3/5 - Computing the ex post monthly performance...")
     mv_carbon_performance = build_drifted_performance(return_matrix, mv_carbon_weights)
     risk_free_series = data["risk_free"].set_index("date")["rf_decimal"]
     summary_stats = compute_summary_stats(mv_carbon_performance.set_index("date")["portfolio_return"], risk_free_series)
     summary_table = pd.DataFrame([summary_stats])
 
-    log_step("Section 3.2 - Etape 4/5 - Je calcule les metriques carbone et les changements de portefeuille...")
+    log_step("  Minimum Variance Carbon 3.2 4/5 - Computing the carbon metrics and portfolio changes...")
     _, mv_carbon_annual, mv_carbon_top10 = compute_portfolio_annual_carbon_metrics(
         mv_carbon_weights,
         eligible_annual,
@@ -236,7 +235,7 @@ def main():
         ]
     )
 
-    log_step("Section 3.2 - Etape 5/5 - J'enregistre les sorties...")
+    log_step("  Minimum Variance Carbon 3.2 5/5 - Saving the outputs...")
     weights_path = write_workbook(
         WEIGHTS_FILE,
         {
@@ -268,9 +267,9 @@ def main():
     save_waci_figure(base_carbon, mv_carbon_annual)
     save_cf_figure(base_carbon, mv_carbon_annual)
 
-    log_step(f"Fichier poids ecrit: {weights_path}")
-    log_step(f"Fichier performance ecrit: {performance_path}")
-    log_step(f"Fichier synthese ecrit: {summary_path}")
+    log_step(f"  Weights file written: {weights_path}")
+    log_step(f"  Performance file written: {performance_path}")
+    log_step(f"  Summary file written: {summary_path}")
     print("Section 3.2 complete.", flush=True)
 
 

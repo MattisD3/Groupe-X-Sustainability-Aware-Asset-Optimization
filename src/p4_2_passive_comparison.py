@@ -18,12 +18,12 @@ FIGURE_FILE = "AA_Passive_Comparison_4_2_Cumulative_Returns.png"
 
 
 def load_annual_carbon(file_name: str, sheet_name: str):
-    """Je charge une table annuelle carbone deja produite."""
+    """Load an annual carbon table that was already produced."""
     return pd.read_excel(PROCESSED_DIR / file_name, sheet_name=sheet_name)
 
 
 def build_passive_comparison_table(data: dict[str, object]):
-    """Je compare les trois strategies passives demandees en section 4.2."""
+    """Compare the three passive strategies required in Section 4.2."""
     risk_free_series = data["risk_free"].set_index("date")["rf_decimal"]
     section_31_annual = load_annual_carbon("P_Carbon_3_1_WACI_CF.xlsx", "Annual Metrics")
 
@@ -68,7 +68,7 @@ def build_passive_comparison_table(data: dict[str, object]):
 
 
 def build_comment_table(comparison_table: pd.DataFrame):
-    """Je formule les commentaires attendus pour la comparaison passive finale."""
+    """Build the interpretation notes for the final passive comparison."""
     comparison = comparison_table.set_index("portfolio")
     vw = comparison.loc["vw"]
     vw_carbon = comparison.loc["vw_carbon"]
@@ -110,16 +110,16 @@ def build_comment_table(comparison_table: pd.DataFrame):
 def save_cumulative_figure(vw_performance,
                            vw_carbon_performance,
                            vw_nz_performance):
-    """Je sauvegarde la figure des trois stratégies passives."""
+    """Save the cumulative return figure for the three passive strategies."""
 
     figure_path = PROCESSED_DIR / FIGURE_FILE
 
-    # copies locales
+    # Local copies avoid modifying the original inputs.
     base = vw_performance.copy()
     carbon = vw_carbon_performance.copy()
     nz = vw_nz_performance.copy()
 
-    # recalcul propre des rendements cumulés
+    # Recompute cumulative returns directly for plotting.
     base["cumulative_growth_plot"] = (
         1 + base["portfolio_return"]
     ).cumprod()
@@ -167,13 +167,13 @@ def save_cumulative_figure(vw_performance,
     plt.close(fig)
 
 def main():
-    """Je compare les trois strategies passives de la section 4.2."""
-    log_step("Section 4.2 - Etape 1/3 - Je charge les sorties utiles...")
+    """Compare the three passive strategies in Section 4.2."""
+    log_step("  Passive Comparison 4.2 1/3 - Loading the required outputs...")
     data = load_carbon_inputs()
     vw_carbon_performance = pd.read_excel(PROCESSED_DIR / "U_TrackingError_Carbon_3_3_Monthly_Performance.xlsx", sheet_name="Monthly Performance", parse_dates=["date"])
     vw_nz_performance = pd.read_excel(PROCESSED_DIR / "X_NetZero_4_1_Monthly_Performance.xlsx", sheet_name="Monthly Performance", parse_dates=["date"])
 
-    log_step("Section 4.2 - Etape 2/3 - Je construis la comparaison finale...")
+    log_step("  Passive Comparison 4.2 2/3 - Building the final comparison...")
     comparison_table = build_passive_comparison_table(data)
     comments_table = build_comment_table(comparison_table)
     captions = build_caption_table(
@@ -193,7 +193,7 @@ def main():
         ]
     )
 
-    log_step("Section 4.2 - Etape 3/3 - J'enregistre les sorties...")
+    log_step("  Passive Comparison 4.2 3/3 - Saving the outputs...")
     workbook_path = write_workbook(
         OUTPUT_FILE,
         {
@@ -204,8 +204,8 @@ def main():
     )
     save_cumulative_figure(data["vw_performance"], vw_carbon_performance, vw_nz_performance)
 
-    log_step(f"Fichier comparatif ecrit: {workbook_path}")
-    print("Section 4.2 complete.", flush=True)
+    log_step(f"  Comparison workbook written: {workbook_path}")
+    print("  Section 4.2 completed.", flush=True)
 
 
 if __name__ == "__main__":

@@ -34,15 +34,15 @@ CF_FIGURE = "V_TrackingError_Carbon_3_3_CF.png"
 
 def save_cumulative_figure(base_performance: pd.DataFrame,
                            carbon_performance: pd.DataFrame):
-    """Je sauvegarde la figure de performance cumulative."""
+    """Save the cumulative return figure."""
 
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
 
-    # copie locale pour éviter toute modification ailleurs
+    # Local copies avoid modifying the original inputs.
     base = base_performance.copy()
     carbon = carbon_performance.copy()
 
-    # recalcul propre des rendements cumulés
+    # Recompute cumulative returns directly for plotting.
     base["cumulative_growth_plot"] = (1 + base["portfolio_return"]).cumprod()
 
     carbon["cumulative_growth_plot"] = (1 + carbon["portfolio_return"]).cumprod()
@@ -74,7 +74,7 @@ def save_cumulative_figure(base_performance: pd.DataFrame,
 
 
 def save_waci_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
-    """Je sauvegarde la figure WACI de la section 3.3."""
+    """Save the WACI figure for Section 3.3."""
     figure_path = PROCESSED_DIR / WACI_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(base_carbon["formation_year"], base_carbon["waci"], color="steelblue", label="P(vw)_oos")
@@ -90,7 +90,7 @@ def save_waci_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
 
 
 def save_cf_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
-    """Je sauvegarde la figure CF de la section 3.3."""
+    """Save the carbon footprint figure for Section 3.3."""
     figure_path = PROCESSED_DIR / CF_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(base_carbon["formation_year"], base_carbon["cf"], color="steelblue", label="P(vw)_oos")
@@ -107,7 +107,7 @@ def save_cf_figure(base_carbon: pd.DataFrame, carbon_portfolio: pd.DataFrame):
 
 def compute_vw_reference_cf(year_universe: pd.DataFrame):
     """
-    Je calcule le carbon footprint du benchmark VW a partir des market caps de fin d'annee.
+    Compute the VW benchmark carbon footprint from year-end market capitalizations.
     """
     valid_carbon = year_universe.loc[year_universe["valid_carbon_inputs"]].copy()
     total_market_cap = float(valid_carbon["year_end_market_value_musd"].sum())
@@ -117,8 +117,8 @@ def compute_vw_reference_cf(year_universe: pd.DataFrame):
 
 
 def main():
-    """Je construis le portefeuille a tracking error minimal avec reduction de 50% du CF VW."""
-    log_step("Section 3.3 - Etape 1/5 - Je charge les donnees utiles...")
+    """Build the minimum tracking-error portfolio with a 50% reduction in VW carbon footprint."""
+    log_step("  Tracking Error Carbon 3.3 1/5 - Loading the required data...")
     data = load_carbon_inputs()
     eligible_annual = prepare_eligible_annual_panel(data["annual_data"], data["investment_set"])
     return_matrix = build_return_matrix(data["monthly_data"])
@@ -127,7 +127,7 @@ def main():
     base_vw_carbon = pd.read_excel(PROCESSED_DIR / "P_Carbon_3_1_WACI_CF.xlsx", sheet_name="Annual Metrics")
     base_vw_carbon = base_vw_carbon.loc[base_vw_carbon["portfolio"] == "vw"].copy()
 
-    log_step("Section 3.3 - Etape 2/5 - Je resous les optimisations annuelles...")
+    log_step("  Tracking Error Carbon 3.3 2/5 - Solving the annual optimizations...")
     benchmark_rows: list[pd.DataFrame] = []
     weight_rows: list[pd.DataFrame] = []
     optimization_logs: list[dict[str, object]] = []
@@ -143,7 +143,7 @@ def main():
     }
 
     for formation_year in range(FIRST_FORMATION_YEAR, LAST_FORMATION_YEAR + 1):
-        log_step(f"Section 3.3 - Je traite l'annee de formation {formation_year}...")
+        log_step(f"  Tracking Error Carbon 3.3 - Processing formation year {formation_year}...")
         year_universe = eligible_by_year.get(
             formation_year,
             pd.DataFrame()
@@ -153,7 +153,7 @@ def main():
         covariance_matrix, optimization_universe = align_covariance_universe(covariance_matrix, optimization_universe)
 
         if covariance_matrix.empty or optimization_universe.empty:
-            warn(f"Section 3.3 - empty optimization universe for year {formation_year}.")
+            warn(f"Tracking Error Carbon 3.3 - empty optimization universe for year {formation_year}.")
             continue
 
         benchmark_year = benchmark_by_year.get(
@@ -162,7 +162,7 @@ def main():
         ).copy()
         benchmark_year = benchmark_year.loc[benchmark_year["isin"].isin(optimization_universe["isin"])].copy()
         if benchmark_year.empty:
-            warn(f"Section 3.3 - empty benchmark universe for year {formation_year}.")
+            warn(f"Tracking Error Carbon 3.3 - empty benchmark universe for year {formation_year}.")
             continue
 
         benchmark_year["weight"] = benchmark_year["weight"] / benchmark_year["weight"].sum()
@@ -202,7 +202,7 @@ def main():
             warn(
                 f"Section 3.3 - year {formation_year}: constrained problem failed or was infeasible. "
                 f"Target={carbon_target:.6f}, benchmark_CF={benchmark_cf:.6f}. "
-                f"I fall back to the annual VW benchmark weights."
+                f"The annual VW benchmark weights are used as fallback."
             )
             final_weights = benchmark_series.copy()
             achieved_cf = float((final_weights * carbon_vector.loc[final_weights.index]).sum())
@@ -236,13 +236,13 @@ def main():
     vw_carbon_weights = pd.concat(weight_rows, ignore_index=True)
     optimization_log = pd.DataFrame(optimization_logs)
 
-    log_step("Section 3.3 - Etape 3/5 - Je calcule la performance mensuelle ex post...")
+    log_step("  Tracking Error Carbon 3.3 3/5 - Computing the ex post monthly performance...")
     vw_carbon_performance = build_drifted_performance(return_matrix, vw_carbon_weights)
     risk_free_series = data["risk_free"].set_index("date")["rf_decimal"]
     summary_stats = compute_summary_stats(vw_carbon_performance.set_index("date")["portfolio_return"], risk_free_series)
     summary_table = pd.DataFrame([summary_stats])
 
-    log_step("Section 3.3 - Etape 4/5 - Je calcule les metriques carbone et les deformations de poids...")
+    log_step("  Tracking Error Carbon 3.3 4/5 - Computing the carbon metrics and weight distortions...")
     _, vw_carbon_annual, vw_carbon_top10 = compute_portfolio_annual_carbon_metrics(
         vw_carbon_weights,
         eligible_annual,
@@ -274,7 +274,7 @@ def main():
         ]
     )
 
-    log_step("Section 3.3 - Etape 5/5 - J'enregistre les sorties...")
+    log_step("  Tracking Error Carbon 3.3 5/5 - Saving the outputs...")
     weights_path = write_workbook(
         WEIGHTS_FILE,
         {
@@ -307,10 +307,10 @@ def main():
     save_waci_figure(base_vw_carbon, vw_carbon_annual)
     save_cf_figure(base_vw_carbon, vw_carbon_annual)
 
-    log_step(f"Fichier poids ecrit: {weights_path}")
-    log_step(f"Fichier performance ecrit: {performance_path}")
-    log_step(f"Fichier synthese ecrit: {summary_path}")
-    print("Section 3.3 complete.", flush=True)
+    log_step(f"  Weights file written: {weights_path}")
+    log_step(f"  Performance file written: {performance_path}")
+    log_step(f"  Summary file written: {summary_path}")
+    print("  Section 3.3 completed.", flush=True)
 
 
 if __name__ == "__main__":

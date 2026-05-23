@@ -35,7 +35,7 @@ ANNUAL_METRIC_COLUMNS = [
 
 
 def save_waci_figure(mv_annual_carbon, vw_annual_carbon):
-    """Je sauvegarde la figure WACI de la section 3.1."""
+    """Save the WACI figure for Section 3.1."""
     figure_path = PROCESSED_DIR / WACI_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(mv_annual_carbon["formation_year"], mv_annual_carbon["waci"], color="darkorange", label="P(mv)_oos")
@@ -52,7 +52,7 @@ def save_waci_figure(mv_annual_carbon, vw_annual_carbon):
 
 
 def save_cf_figure(mv_annual_carbon, vw_annual_carbon):
-    """Je sauvegarde la figure de carbon footprint de la section 3.1."""
+    """Save the carbon footprint figure for Section 3.1."""
     figure_path = PROCESSED_DIR / CF_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(mv_annual_carbon["formation_year"], mv_annual_carbon["cf"], color="darkorange", label="P(mv)_oos")
@@ -69,7 +69,7 @@ def save_cf_figure(mv_annual_carbon, vw_annual_carbon):
 
 
 def prepare_annual_metrics_table(mv_annual_carbon, vw_annual_carbon, mv_wealth_path: pd.DataFrame):
-    """Je rassemble les metriques annuelles MV et VW dans une seule table propre."""
+    """Combine the annual MV and VW metrics into a single table."""
     mv_annual_metrics = (
         mv_annual_carbon.merge(
             mv_wealth_path,
@@ -94,11 +94,11 @@ def prepare_annual_metrics_table(mv_annual_carbon, vw_annual_carbon, mv_wealth_p
 
 
 def main():
-    """Je calcule la WACI et le carbon footprint des portefeuilles de reference."""
-    log_step("Section 3.1 - Etape 1/4 - Je charge les sorties de la Part I...")
+    """Compute WACI and carbon footprint for the reference portfolios."""
+    log_step("  Carbon Footprint 3.1 1/4 - Loading the Part I outputs...")
     data = load_carbon_inputs()
 
-    log_step("Section 3.1 - Etape 2/4 - Je verifie que la Part I colle aux valeurs de reference...")
+    log_step("  Carbon Footprint 3.1 2/4 - Checking the Part I reference values...")
     reference_table = build_reference_summary_table(
         data["mv_performance"],
         data["vw_performance"],
@@ -106,7 +106,7 @@ def main():
     )
     ensure_part1_cross_check(reference_table)
 
-    log_step("Section 3.1 - Etape 3/4 - Je calcule les metriques carbone annuelles...")
+    log_step("  Carbon Footprint 3.1 3/4 - Computing the annual carbon metrics...")
     eligible_annual = prepare_eligible_annual_panel(data["annual_data"], data["investment_set"])
 
     mv_details, mv_annual_carbon, mv_top10 = compute_portfolio_annual_carbon_metrics(
@@ -144,7 +144,7 @@ def main():
         ]
     )
 
-    log_step("Section 3.1 - Etape 4/4 - J'enregistre les tableaux et les figures...")
+    log_step("  Carbon Footprint 3.1 4/4 - Saving the tables and figures...")
     workbook_path = write_workbook(
         OUTPUT_FILE,
         {
@@ -161,9 +161,9 @@ def main():
     waci_figure_path = save_waci_figure(mv_annual_carbon, vw_annual_carbon)
     cf_figure_path = save_cf_figure(mv_annual_carbon, vw_annual_carbon)
 
-    log_step(f"Tableau ecrit: {workbook_path}")
-    log_step(f"Figure WACI ecrite: {waci_figure_path}")
-    log_step(f"Figure CF ecrite: {cf_figure_path}")
+    log_step(f"  Table written: {workbook_path}")
+    log_step(f"  WACI figure written: {waci_figure_path}")
+    log_step(f"  Carbon footprint figure written: {cf_figure_path}")
     print("Section 3.1 complete.", flush=True)
 
 

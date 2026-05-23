@@ -18,12 +18,12 @@ FIGURE_FILE = "Z_Carbon_Comparison_3_4_Cumulative_Returns.png"
 
 
 def load_annual_carbon_table(file_name: str, sheet_name: str):
-    """Je charge une table annuelle carbone deja produite par une section precedente."""
+    """Load an annual carbon table produced by a previous section."""
     return pd.read_excel(PROCESSED_DIR / file_name, sheet_name=sheet_name)
 
 
 def build_comparison_table(data: dict[str, object]):
-    """Je rassemble les statistiques financieres et carbone des quatre portefeuilles."""
+    """Combine the financial and carbon statistics of the four portfolios."""
     risk_free_series = data["risk_free"].set_index("date")["rf_decimal"]
     section_31_annual = load_annual_carbon_table("P_Carbon_3_1_WACI_CF.xlsx", "Annual Metrics")
 
@@ -65,7 +65,7 @@ def build_comparison_table(data: dict[str, object]):
 
 
 def build_comment_table(comparison_table: pd.DataFrame):
-    """Je formule les commentaires attendus par la section 3.4."""
+    """Build the interpretation notes required for Section 3.4."""
     comparison_by_portfolio = comparison_table.set_index("portfolio")
     mv_base = comparison_by_portfolio.loc["mv_oos"]
     mv_carbon = comparison_by_portfolio.loc["mv_carbon"]
@@ -107,17 +107,16 @@ def save_cumulative_figure(
         vw_performance,
         vw_carbon_performance):
 
-    """Je sauvegarde la figure commune des quatre portefeuilles."""
+    """Save the cumulative return figure for the four portfolios."""
 
     figure_path = PROCESSED_DIR / FIGURE_FILE
 
-    # copies locales
+    # Local copies avoid modifying the original inputs.
     mv = mv_performance.copy()
     mv_carbon = mv_carbon_performance.copy()
     vw = vw_performance.copy()
     vw_carbon = vw_carbon_performance.copy()
 
-    # recalcul propre des cumulés
     mv["cum_plot"] = (1 + mv["portfolio_return"]).cumprod()
     mv_carbon["cum_plot"] = (1 + mv_carbon["portfolio_return"]).cumprod()
     vw["cum_plot"] = (1 + vw["portfolio_return"]).cumprod()
@@ -167,13 +166,13 @@ def save_cumulative_figure(
 
 
 def main():
-    """Je compare les quatre portefeuilles de la section 3.4."""
-    log_step("Section 3.4 - Etape 1/3 - Je charge les sorties des sections precedentes...")
+    """Compare the four portfolios in Section 3.4."""
+    log_step("  Carbon Comparison 3.4 1/3 - Loading the outputs from the previous sections...")
     data = load_carbon_inputs()
     mv_carbon_performance = pd.read_excel(PROCESSED_DIR / "R_MinVar_Carbon_3_2_Monthly_Performance.xlsx", sheet_name="Monthly Performance", parse_dates=["date"])
     vw_carbon_performance = pd.read_excel(PROCESSED_DIR / "U_TrackingError_Carbon_3_3_Monthly_Performance.xlsx", sheet_name="Monthly Performance", parse_dates=["date"])
 
-    log_step("Section 3.4 - Etape 2/3 - Je construis la table comparative et les commentaires...")
+    log_step("  Carbon Comparison 3.4 2/3 - Building the comparison table and interpretation notes...")
     comparison_table = build_comparison_table(data)
     comments_table = build_comment_table(comparison_table)
     captions = build_caption_table(
@@ -193,7 +192,7 @@ def main():
         ]
     )
 
-    log_step("Section 3.4 - Etape 3/3 - J'enregistre les sorties...")
+    log_step("  Carbon Comparison 3.4 3/3 - Saving the outputs...")
     workbook_path = write_workbook(
         OUTPUT_FILE,
         {
@@ -209,8 +208,8 @@ def main():
         vw_carbon_performance,
     )
 
-    log_step(f"Fichier comparatif ecrit: {workbook_path}")
-    print("Section 3.4 complete.", flush=True)
+    log_step(f"  Comparison workbook written: {workbook_path}")
+    print("  Section 3.4 completed.", flush=True)
 
 
 if __name__ == "__main__":

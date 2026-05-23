@@ -14,7 +14,7 @@ CUMULATIVE_FIGURE = "P_MinVar_vs_ValueWeighted_Cumulative_Returns.png"
 
 
 def save_cumulative_figure(mv_performance: pd.DataFrame, vw_performance: pd.DataFrame):
-    """Je sauvegarde la comparaison des rendements cumules entre P(mv)_oos et P(vw)."""
+    """Save the cumulative return comparison between P(mv)_oos and P(vw)."""
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
 
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
@@ -40,12 +40,12 @@ def save_cumulative_figure(mv_performance: pd.DataFrame, vw_performance: pd.Data
     fig.savefig(figure_path, bbox_inches="tight")
     plt.close(fig)
 
-    print(f"Figure cumulative ecrite: {figure_path}", flush=True)
+    print(f"  Cumulative return figure written: {figure_path}", flush=True)
 
 
 def main():
     start_time = time.perf_counter()
-    print("Section 2.4 - Je compare P(mv)_oos et P(vw)_oos", flush=True)
+    print("  MinVar vs Value-Weighted Comparison 2.4 - Comparing P(mv)_oos and P(vw)_oos...", flush=True)
 
     mv_performance = pd.read_excel(PROCESSED_DIR / MV_PERFORMANCE_FILE, parse_dates=["date"])
     vw_performance = pd.read_excel(PROCESSED_DIR / VW_PERFORMANCE_FILE, parse_dates=["date"])

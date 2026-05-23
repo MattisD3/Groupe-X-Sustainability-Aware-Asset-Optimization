@@ -33,7 +33,7 @@ CF_PATH_FIGURE = "Y_NetZero_4_1_CF_Path.png"
 
 
 def compute_vw_reference_cf(year_universe: pd.DataFrame):
-    """Je calcule le carbon footprint annuel du benchmark VW."""
+    """Compute the annual carbon footprint of the VW benchmark."""
     valid_carbon = year_universe.loc[year_universe["valid_carbon_inputs"]].copy()
     total_market_cap = float(valid_carbon["year_end_market_value_musd"].sum())
     if valid_carbon.empty or total_market_cap <= 0:
@@ -43,15 +43,15 @@ def compute_vw_reference_cf(year_universe: pd.DataFrame):
 
 def save_cumulative_figure(base_performance: pd.DataFrame,
                            nz_performance: pd.DataFrame):
-    """Je sauvegarde la comparaison des rendements cumulés contre le benchmark VW."""
+    """Save the cumulative return comparison against the VW benchmark."""
 
     figure_path = PROCESSED_DIR / CUMULATIVE_FIGURE
 
-    # copies locales pour ne rien modifier ailleurs
+    # Local copies avoid modifying the original inputs.
     base = base_performance.copy()
     nz = nz_performance.copy()
 
-    # recalcul propre du cumul
+    # Recompute cumulative returns directly for plotting.
     base["cumulative_growth_plot"] = (
         1 + base["portfolio_return"]
     ).cumprod()
@@ -89,7 +89,7 @@ def save_cumulative_figure(base_performance: pd.DataFrame,
 
 
 def save_cf_path_figure(base_carbon: pd.DataFrame, nz_annual: pd.DataFrame, target_table: pd.DataFrame):
-    """Je sauvegarde la figure du carbon footprint et de la trajectoire net-zero."""
+    """Save the carbon footprint figure and the net-zero target path."""
     figure_path = PROCESSED_DIR / CF_PATH_FIGURE
     fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
     ax.plot(base_carbon["formation_year"], base_carbon["cf"], color="steelblue", label="P(vw)_oos")
@@ -106,8 +106,8 @@ def save_cf_path_figure(base_carbon: pd.DataFrame, nz_annual: pd.DataFrame, targ
 
 
 def main():
-    """Je construis le portefeuille passif net-zero avec cible fixe sur la base 2013."""
-    log_step("Section 4.1 - Etape 1/5 - Je charge les donnees et je fixe la base 2013...")
+    """Build the passive net-zero portfolio with a fixed 2013 baseline target."""
+    log_step("  Net Zero 4.1 1/5 - Loading the data and setting the 2013 baseline...")
     data = load_carbon_inputs()
     eligible_annual = prepare_eligible_annual_panel(data["annual_data"], data["investment_set"])
     return_matrix = build_return_matrix(data["monthly_data"])
@@ -117,27 +117,27 @@ def main():
 
     base_2013_cf = compute_vw_reference_cf(eligible_annual.loc[eligible_annual["formation_year"] == FIRST_FORMATION_YEAR].copy())
 
-    log_step("Section 4.1 - Etape 2/5 - Je resous les optimisations annuelles net-zero...")
+    log_step("  Net Zero 4.1 2/5 - Solving the annual net-zero optimizations...")
     benchmark_rows: list[pd.DataFrame] = []
     weight_rows: list[pd.DataFrame] = []
     optimization_logs: list[dict[str, object]] = []
     target_rows: list[dict[str, float]] = []
 
     for formation_year in range(FIRST_FORMATION_YEAR, LAST_FORMATION_YEAR + 1):
-        log_step(f"Section 4.1 - Je traite l'annee de formation {formation_year}...")
+        log_step(f"  Net Zero 4.1 - Processing formation year {formation_year}...")
         year_universe = eligible_annual.loc[eligible_annual["formation_year"] == formation_year].copy()
         optimization_universe = year_universe.loc[year_universe["valid_carbon_inputs"]].copy()
         covariance_matrix = data["covariance_matrices"][formation_year].copy()
         covariance_matrix, optimization_universe = align_covariance_universe(covariance_matrix, optimization_universe)
 
         if covariance_matrix.empty or optimization_universe.empty:
-            warn(f"Section 4.1 - empty optimization universe for year {formation_year}.")
+            warn(f"Net Zero 4.1 - empty optimization universe for year {formation_year}.")
             continue
 
         benchmark_year = vw_benchmark_weights.loc[vw_benchmark_weights["formation_year"] == formation_year].copy()
         benchmark_year = benchmark_year.loc[benchmark_year["isin"].isin(optimization_universe["isin"])].copy()
         if benchmark_year.empty:
-            warn(f"Section 4.1 - empty benchmark universe for year {formation_year}.")
+            warn(f"Net Zero 4.1 - empty benchmark universe for year {formation_year}.")
             continue
 
         benchmark_year["weight"] = benchmark_year["weight"] / benchmark_year["weight"].sum()
@@ -188,7 +188,7 @@ def main():
             warn(
                 f"Section 4.1 - year {formation_year}: constrained problem failed or was infeasible. "
                 f"Target={carbon_target:.6f}, benchmark_CF={benchmark_cf:.6f}. "
-                f"I fall back to the annual VW benchmark weights."
+                f"The annual VW benchmark weights are used as fallback."
             )
             final_weights = benchmark_series.copy()
             achieved_cf = float((final_weights * carbon_vector.loc[final_weights.index]).sum())
@@ -223,13 +223,13 @@ def main():
     optimization_log = pd.DataFrame(optimization_logs)
     target_table = pd.DataFrame(target_rows)
 
-    log_step("Section 4.1 - Etape 3/5 - Je calcule la performance mensuelle ex post...")
+    log_step("  Net Zero 4.1 3/5 - Computing the ex post monthly performance...")
     vw_nz_performance = build_drifted_performance(return_matrix, vw_nz_weights)
     risk_free_series = data["risk_free"].set_index("date")["rf_decimal"]
     summary_stats = compute_summary_stats(vw_nz_performance.set_index("date")["portfolio_return"], risk_free_series)
     summary_table = pd.DataFrame([summary_stats])
 
-    log_step("Section 4.1 - Etape 4/5 - Je calcule les metriques carbone et la deformation du benchmark...")
+    log_step("  Net Zero 4.1 4/5 - Computing the carbon metrics and benchmark distortions...")
     _, vw_nz_annual, vw_nz_top10 = compute_portfolio_annual_carbon_metrics(
         vw_nz_weights,
         eligible_annual,
@@ -261,7 +261,7 @@ def main():
         ]
     )
 
-    log_step("Section 4.1 - Etape 5/5 - J'enregistre les sorties...")
+    log_step("  Net Zero 4.1 5/5 - Saving the outputs...")
     weights_path = write_workbook(
         WEIGHTS_FILE,
         {
@@ -294,10 +294,10 @@ def main():
     save_cumulative_figure(data["vw_performance"], vw_nz_performance)
     save_cf_path_figure(base_vw_carbon, vw_nz_annual, target_table)
 
-    log_step(f"Fichier poids ecrit: {weights_path}")
-    log_step(f"Fichier performance ecrit: {performance_path}")
-    log_step(f"Fichier synthese ecrit: {summary_path}")
-    print("Section 4.1 complete.", flush=True)
+    log_step(f"  Weights file written: {weights_path}")
+    log_step(f"  Performance file written: {performance_path}")
+    log_step(f"  Summary file written: {summary_path}")
+    print("  Section 4.1 completed.", flush=True)
 
 
 if __name__ == "__main__":

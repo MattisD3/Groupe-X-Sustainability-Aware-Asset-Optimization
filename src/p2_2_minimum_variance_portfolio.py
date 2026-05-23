@@ -1,45 +1,39 @@
 from __future__ import annotations
-
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 
-
-# Je centralise les chemins pour garder un script simple.
+# Project paths.
 BASE_DIR = Path(__file__).resolve().parents[1]
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 RAW_DIR = BASE_DIR / "data" / "Raw"
 
-
-# Je recharge seulement les fichiers utiles a la section 2.2.
+# Files required for Section 2.2.
 MONTHLY_DATA_FILE = "B_EM_Monthly_Data.xlsx"
 INVESTMENT_SET_FILE = "F_MinVar_2_1_Investment_Set.xlsx"
 COVARIANCE_FILE = "H_MinVar_2_1_Covariance_Matrices.xlsx"
 RISK_FREE_FILE = "Risk_Free_Rate_2025.xlsx"
 
-
-# Je borne l'exercice exactement comme dans le document.
+# Project time span.
 FIRST_FORMATION_YEAR = 2013
 LAST_FORMATION_YEAR = 2024
 
-
-# Je nomme les sorties en continuant la serie.
+# Output files.
 OUTPUT_FILES = {
     "weights": "J_MinVar_2_2_Weights.xlsx",
     "monthly_returns": "K_MinVar_2_2_Monthly_Performance.xlsx",
-    "summary": "L_MinVar_2_2_Summary.xlsx",
-}
+    "summary": "L_MinVar_2_2_Summary.xlsx"}
 
 
 def log_step(message: str):
-    """Je m'affiche dans le terminal pour rendre l'execution lisible."""
+    """Print a progress message to the terminal."""
     print(message, flush=True)
 
 
 def write_excel_with_fallback(df: pd.DataFrame, file_name: str):
-    """J'ecris un Excel, ou une version _new si le fichier est deja ouvert."""
+    """Write an Excel file, or a _new version if the file is already open."""
     target_path = PROCESSED_DIR / file_name
 
     try:
@@ -52,9 +46,7 @@ def write_excel_with_fallback(df: pd.DataFrame, file_name: str):
 
 
 def load_inputs():
-    """
-    Je charge uniquement les sorties utiles de la section 2.1 et le taux sans risque brut.
-    """
+    """Load the Section 2.1 outputs and the raw risk-free rate file."""
     monthly_data = pd.read_excel(
         PROCESSED_DIR / MONTHLY_DATA_FILE,
         parse_dates=["Date", "Delisting Date"],
@@ -107,13 +99,13 @@ def load_inputs():
 
 def solve_long_only_min_variance(covariance_matrix: pd.DataFrame):
     """
-    Je resous le probleme minimum-variance long-only.
+    Solve the long-only minimum-variance problem.
 
-    Je cherche les poids alpha qui minimisent:
+    The objective is:
     alpha' Sigma alpha
-    sous les contraintes:
-    - somme des poids = 1
-    - poids >= 0
+    subject to:
+    - weights sum to 1
+    - weights are non-negative
     """
     asset_names = covariance_matrix.columns.tolist()
     sigma = covariance_matrix.to_numpy(dtype=float)
@@ -160,17 +152,16 @@ def build_optimal_weights(
     covariance_matrices: dict[int, pd.DataFrame],
 ):
     """
-    Je calcule les poids optimaux a la fin de chaque annee de formation.
+    Compute the optimal weights at the end of each formation year.
 
-    Je pars des firmes eligibles de 2.1. Ensuite, pour l'optimisation elle-meme,
-    je retire les firmes qui ont encore une ligne/colonne incomplete dans la matrice
-    de covariance de l'annee consideree.
+    Eligible firms from Section 2.1 are used first. Firms with incomplete
+    rows or columns in the covariance matrix are then removed before optimization.
     """
     all_weights: list[pd.DataFrame] = []
     optimizer_eligible_counts: list[dict[str, int]] = []
 
     for formation_year in range(FIRST_FORMATION_YEAR, LAST_FORMATION_YEAR + 1):
-        log_step(f"Je traite l'annee de formation {formation_year}.")
+        log_step(f"  Minimum Variance 2.2 - Processing formation year {formation_year}...")
 
         year_investment_set = investment_set.loc[
             (investment_set["formation_year"] == formation_year)
@@ -196,7 +187,7 @@ def build_optimal_weights(
             ["isin", "company_name", "country", "region"]
         ].drop_duplicates()
 
-        log_step(f"Annee {formation_year} : optimisation sur {len(covariance_matrix)} actions.")
+        log_step(f"  Minimum Variance 2.2 - Year {formation_year}: optimization on {len(covariance_matrix)} stocks.")
         optimal_weights = solve_long_only_min_variance(covariance_matrix)
 
         weights_df = optimal_weights.reset_index()
@@ -236,9 +227,7 @@ def build_optimal_weights(
 
 
 def build_monthly_return_matrix(monthly_data: pd.DataFrame):
-    """
-    Je pivote les rendements mensuels pour pouvoir calculer les rendements de portefeuille.
-    """
+    """Pivot monthly returns into matrix form for portfolio calculations."""
     return_matrix = monthly_data.pivot(index="date", columns="isin", values="monthly_return")
     return_matrix.columns = return_matrix.columns.astype(str)
     return_matrix = return_matrix.sort_index()
@@ -250,12 +239,12 @@ def compute_ex_post_performance(
     weights_table: pd.DataFrame,
 ):
     """
-    Je calcule la performance ex post du portefeuille minimum-variance.
+    Compute the ex post performance of the minimum-variance portfolio.
 
-    Pour chaque annee Y:
-    - j'utilise les poids optimaux determines fin Y,
-    - je les applique de janvier Y+1 a decembre Y+1,
-    - je laisse ensuite les poids deriver naturellement mois par mois.
+    For each formation year Y:
+    - the optimal weights determined at the end of Y are used,
+    - the portfolio is held from January Y+1 to December Y+1,
+    - weights then drift naturally from month to month.
     """
     portfolio_rows: list[dict[str, object]] = []
     date_lookup = (
@@ -285,8 +274,7 @@ def compute_ex_post_performance(
 
             month_returns = return_matrix.loc[actual_date, current_weights.index]
 
-            # Les rendements manquants sont traites comme 0 a l'interieur du portefeuille deja investi.
-            # Cela permet de suivre proprement les poids apres radiation ou disparition de la serie.
+            # Missing returns are treated as zero inside the invested portfolio.
             month_returns = month_returns.fillna(0.0)
 
             portfolio_return = float((current_weights * month_returns).sum())
@@ -322,9 +310,8 @@ def compute_summary_statistics(
     risk_free_rate: pd.DataFrame,
     optimizer_stats: pd.DataFrame,
 ):
-    """
-    Je calcule les statistiques demandees pour la section 2.2.
-    """
+    """Compute the summary statistics required for Section 2.2."""
+
     merged = portfolio_returns.merge(risk_free_rate, on="date", how="left")
     merged["excess_return"] = merged["portfolio_return"] - merged["rf_decimal"]
 
@@ -367,7 +354,7 @@ def save_outputs(
     portfolio_returns: pd.DataFrame,
     summary_table: pd.DataFrame,
 ):
-    """J'enregistre les sorties finales de la section 2.2."""
+    """Save the final outputs of Section 2.2."""
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
     written_files = {
@@ -379,27 +366,23 @@ def save_outputs(
 
 
 def main():
-    # Je charge d'abord les sorties propres de 2.1 et le taux sans risque.
-    log_step("Etape 1/4 - Je charge les donnees utiles de la section 2.1...")
+    log_step("  Minimum Variance 2.2 1/4 - Loading the required Section 2.1 data...")
     monthly_data, investment_set, covariance_matrices, risk_free_rate = load_inputs()
 
-    # Je calcule ensuite les poids optimaux minimum-variance long-only.
-    log_step("Etape 2/4 - Je calcule les poids minimum-variance long-only...")
+    log_step("  Minimum Variance 2.2 2/4 - Computing the long-only minimum-variance weights...")
     weights_table, optimizer_stats = build_optimal_weights(
         investment_set=investment_set,
         covariance_matrices=covariance_matrices,
     )
 
-    # Je calcule maintenant la performance ex post mensuelle du portefeuille.
-    log_step("Etape 3/4 - Je calcule les rendements ex post mensuels du portefeuille...")
+    log_step("  Minimum Variance 2.2 3/4 - Computing ex post monthly portfolio returns...")
     return_matrix = build_monthly_return_matrix(monthly_data)
     portfolio_returns = compute_ex_post_performance(
         return_matrix=return_matrix,
         weights_table=weights_table,
     )
 
-    # Je termine par les statistiques et les sorties.
-    log_step("Etape 4/4 - J'enregistre les fichiers finaux...")
+    log_step("  Minimum Variance 2.2 4/4 - Saving the final output files...")
     summary_table = compute_summary_statistics(
         portfolio_returns=portfolio_returns,
         risk_free_rate=risk_free_rate,
@@ -411,10 +394,10 @@ def main():
         summary_table=summary_table,
     )
 
-    log_step("Partie 2.2 terminee.")
-    log_step(f"Nombre total de lignes de poids: {len(weights_table)}")
-    log_step(f"Nombre total de rendements mensuels de portefeuille: {len(portfolio_returns)}")
-    log_step("Fichiers ecrits:")
+    log_step("  Part 2.2 completed.")
+    log_step(f"  Total weight rows: {len(weights_table)}")
+    log_step(f"  Total monthly portfolio return rows: {len(portfolio_returns)}")
+    log_step("  Files written:")
     for label, path in written_files.items():
         log_step(f"{label} : {path}")
 
